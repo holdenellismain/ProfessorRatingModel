@@ -24,6 +24,8 @@
    - If ratemyprofessor's search feature does not return any professors, this function returns `None`
 6. Update the dataframe with these values and write to the [output](data/output.csv)
    - Only writes if the professor has more than 20 reviews to avoid outliers due to small samples.
+8. Do some manual cleaning on the output. Certain professors do not exist in ratemyprofessor which leads to the search returning a false positive. Deleting duplicates and manually
+   verifying some of the professors who haven't taught at UCSB in a while resolved most of these cases. This is how [output_cleaned](data/output_cleaned.csv) was created.
 7. Linear Model in JupyterNotebook -- WIP
 
 ## Conclusions
