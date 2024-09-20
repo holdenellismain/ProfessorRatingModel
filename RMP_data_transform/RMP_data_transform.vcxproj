@@ -128,13 +128,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="professor.h" />
-    <ClInclude Include="readerfuncs.h" />
+    <ClInclude Include="writerfuncs.h" />
     <ClInclude Include="test.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="professor.cpp" />
-    <ClCompile Include="readerfuncs.cpp" />
+    <ClCompile Include="writerfuncs.cpp" />
     <ClCompile Include="test.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
