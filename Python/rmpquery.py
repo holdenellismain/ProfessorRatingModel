@@ -30,8 +30,8 @@ for index, row in csv.iterrows():
         #makes program to take longer but means data isn't lost due to crashes
         #important because crashes can be caused by factors mostly out of my control such as wifi or rate limiting
         if csv.loc[index,'n'] > 20: #if there is a sufficent sample of reviews
-            csv.loc[index].to_frame().T.to_csv('output.csv', mode='a', index=False, header=False)
-            print('Wrote ', professor_name, 'to file')
+            output_row = csv.loc[index].to_frame().T
+            output_row.to_csv('output.csv', mode='a', index=False, header=False)
 
     #sleep to avoid rate limiting, not sure if this is actually necessary
     sleep(0.3)
