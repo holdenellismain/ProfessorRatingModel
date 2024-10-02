@@ -1,0 +1,122 @@
+---
+title: "Analysis of UCSB's RateMyProfessor and Grade Data"
+author: "Holden Ellis"
+date: "September 29, 2024"
+output:
+  html_document:
+    df_print: paged
+---
+```{r, include=FALSE}
+grades <- read.csv('courseGrades.csv')
+prof_data <- read.csv('output_cleaned.csv')
+
+library(dplyr)
+require(leaps)
+options(scipen=999, digits=4)
+```
+
+## Grade Distribution by Department
+
+Using summary of the raw grades dataset we can easily see some patterns in grade distribution by department.
+
+```{r, echo=FALSE}
+departmentdf <- 
+  grades %>% 
+  group_by(dept) %>%
+  summarise(yearGPA = weighted.mean(avgGPA, nLetterStudents)) %>%
+  arrange(desc(yearGPA)) %>%
+  na.omit
+
+par(mfrow = c(1,2))
+p <- barplot(head(departmentdf$yearGPA,5), names.arg=head(departmentdf$dept,5), main='Highest GPA Departments', ylim=c(0,4), ylab = 'Avg GPA',cex.names = 0.6, las=1, col = "#003660", border=NA)
+p <- barplot(tail(departmentdf$yearGPA,5), names.arg=tail(departmentdf$dept,5), main='Lowest GPA Departments', ylim=c(0,4), ylab='Avg GPA',cex.names = 0.6, las=1, col = "#003660", border=NA)
+```
+
+The easiest departments are CCS Biology, Marine Science, Graduate Divison, Exercise Sport, and Environmental Data Science. These departments mostly exist to give students units for extracirriculars or have a very small sample size of classes. The highest GPA department with a regular selection of both upper and lower division courses is German.
+
+The hardest departments are Geology, Astronomy, Statistics Online, Chem, and Film & Media Online.
+
+## Temporal Trends in GPA
+
+```{r, echo=FALSE}
+summarydf <- 
+  grades %>% 
+  group_by(year) %>%
+  summarise(yearGPA = weighted.mean(avgGPA, nLetterStudents))
+
+p <- barplot(summarydf$yearGPA, names.arg=summarydf$year, main='Average GPA', sub='Note: Letter Graded Courses Only', xlab='Year', col = "#003660", border=NA,cex.names=0.5, ylim=c(0,4), las=2)
+text(x = p, y = summarydf$yearGPA + 0.2, labels = round(summarydf$yearGPA, 2), cex=0.7)
+```
+
+If we estimate the GPA for Pass/No Pass Courses using:
+```{r}
+grades$avgGPA <- ifelse(grades$avgGPA == 0 & grades$nPNPStudents > 0, 
+                        (grades$P * 4)/grades$nPNPStudents, 
+                        grades$avgGPA)
+```
+
+The pattern is largely the same, but with a slightly higher average.
+
+```{r, echo=FALSE}
+estimateddf <- 
+  grades %>% 
+  group_by(year) %>%
+  summarise(yearGPA = weighted.mean(avgGPA, nLetterStudents+nPNPStudents))
+
+
+p <- barplot(estimateddf$yearGPA, names.arg=estimateddf$year, main='Estimated Average GPA', xlab='Year', col = "#003660", border=NA,cex.names=0.5, ylim=c(0,4), las=2)
+text(x = p, y = estimateddf$yearGPA + 0.2, labels = round(estimateddf$yearGPA, 2), cex=0.7)
+```
+
+Because of this, professors who taught classes in the 2010s will usually have lower average GPAs than professors who started teaching at UCSB in the 2020s.
+
+## Numerical Summary by Professor
+
+```{r, echo=FALSE}
+summary(prof_data[c('GPA', 'Difficulty', 'Years', 'RMP_rating')])
+```
+
+## Simple Linear Model
+
+Is it possible to estimate a professor's RateMyProfessor score based on other factors from their teaching career?
+
+First, I created a model with all the factors that could possibly have an effect on the rating.
+
+```{r}
+model <- lm(RMP_rating ~ GPA + Difficulty + Years + Students + RMP_Ratings + First + Last + Years + I(PNP/Students), data=prof_data)
+summary(model)
+```
+
+## Improving the Model
+
+To check the assumptions of error, create a residuals plot and a QQ plot for residuals.
+
+```{r, echo=FALSE}
+plot(model,1:2)
+```
+
+Assumptions of normality seem reasonable, but we do see less overestimation for higher RMP ratings.
+
+The main issue with this model is that many factors in the dataset are not statistically significant.
+
+First, remove variables that we know are dependent on eachother. The obvious example of this is "Last", which is used along with "First" to calculate "Years". Also, "Difficulty" is usually reported by students somewhat based on their grades in the class, which is measured by "GPA". Lastly, "RMP_ratings" and "Students" are generally going to be proportional, so we'll drop "RMP_ratings" since if we have a count for this, we would also have an average RateMyProfessor rating, makign the model redundant.
+
+For the 7 variables that are left over, one method to decide which to use is AIC to select the optimal subset of predictors.
+
+```{r, include=FALSE}
+b <- regsubsets(RMP_rating ~ GPA + Years + Students + 
+    RMP_Ratings + First + Years + I(PNP/Students) ,data=prof_data)
+rs <- summary(b)
+rs$which
+
+AIC <- 50*log(rs$rss/50) + (2:8)*2
+plot(AIC ~ I(1:7), ylab="AIC", xlab="Number of Predictors")
+```
+
+The best AIC is with just 1 predictor, GPA.
+
+```{r}
+lmod <- lm(RMP_rating ~ GPA, data=prof_data)
+plot(prof_data$GPA, prof_data$RMP_rating, xlab="GPA", ylab="Rating", main="Best Linear Model")
+abline(lmod)
+```
