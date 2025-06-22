@@ -3,14 +3,13 @@
 ## Goals
 - Summarize [UCSB Grades Dataset](courseGrades.csv) by professor.
 - Scrape data from [ratemyprofessor.com](ratemyprofessor.com) for each relevant professor.
-- Create a model to predict professor ratings based on the data.
 
 ## Skills/Tools Used
 
 - Object Oriented Programming in C++
 - CSV file manipulation using C++
 - HTML Scraping with BeautifulSoup in Python
-- Analysis and linear modeling with R
+- Analysis and with R
 
 ## Steps
 1. Starting with the [original dataset](data/courseGrades.csv) for each line in the csv
@@ -28,7 +27,6 @@
 8. Do some manual cleaning on the output. Certain professors do not exist in ratemyprofessor which leads to the search returning a false positive. Deleting duplicates and manually
    verifying some of the professors who haven't taught at UCSB in a while resolved most of these cases. This is how [output_cleaned](data/output_cleaned.csv) was created.
 7. Do data analysis and create a model in R. Results are described below and the code can be found [here](RMP_data_analysis.Rmd)
-   - *Note: It would have been easier to write the code in a normal .R file, but I needed to practice .Rmd for my research poisition*
 
 ## Conclusions
 1. Average GPA has been increasing at UCSB and this trend was accelerated by COVID-19
